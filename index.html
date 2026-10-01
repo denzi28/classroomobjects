@@ -190,11 +190,22 @@
   .done { grid-column: 1 / -1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; }
   .done h2 { font-size: clamp(36px, 6vw, 84px); margin: 0; }
   .done p { font-size: clamp(24px, 3.5vw, 48px); margin: 0; }
-  .done .stars { font-size: clamp(40px, 7vw, 100px); }
+  .done .stars { font-size: clamp(56px, 10vw, 150px); font-weight: bold; animation: pop .7s var(--ease-spring) .3s backwards; }
   .done .stars span { display: inline-block; animation: pop .7s var(--ease-spring) both; animation-delay: calc(var(--i) * 180ms + 200ms); }
-  .done .next { opacity: 1; transform: none; pointer-events: auto; }
+  .done .next { opacity: 1; transform: none; pointer-events: auto; align-self: center; }
   body.finished main > :not(.done) { display: none; }
   body.finished .done { display: flex; animation: enter .6s var(--ease-out) both; }
+
+  .flystar {
+    position: fixed;
+    left: 0; top: 0;
+    pointer-events: none;
+    z-index: 11;
+    font-size: clamp(40px, 5vw, 76px);
+    line-height: 1;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,.25));
+  }
 
   .confetti {
     position: fixed;
@@ -235,9 +246,8 @@
     <button class="next" id="next">Next ➜</button>
   </section>
   <section class="done">
+    <h2>Well done!</h2>
     <div class="stars" id="stars"></div>
-    <h2>🎉 Well done! 🎉</h2>
-    <p id="final"></p>
     <button class="next" id="again">🔄 Play again</button>
   </section>
 </main>
@@ -322,7 +332,7 @@
 
   var PRAISE = ['Great job!', 'Excellent!', 'Perfect!', 'Well done!', 'Super!', 'Awesome!', 'Fantastic!'];
   var PRAISE_EMOJI = ['🎉', '👏', '🌟', '🥳', '💪', '🚀', '🏆'];
-  var CONFETTI = ['🎉', '⭐', '✨', '🌟', '🎊', '💫'];
+  var CONFETTI = ['🎉', '✨', '🎊', '💫'];
 
   var $ = function (id) { return document.getElementById(id); };
   var LETTERS = ['A', 'B', 'C'];
@@ -340,12 +350,12 @@
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
   // Recorded sounds (already at half volume). Each play restarts from the beginning.
-  var SOUNDS = { good: new Audio('sounds/correct.mp3'), bad: new Audio('sounds/wrong.mp3') };
+  var SOUNDS = { good: new Audio('sounds/correct.mp3'), bad: new Audio('sounds/wrong.mp3'), end: new Audio('sounds/applause.mp3') };
   Object.keys(SOUNDS).forEach(function (k) { SOUNDS[k].preload = 'auto'; });
   var soundOn = true;
-  function beep(good) {
+  function beep(kind) {   // true = correct, false = wrong, 'end' = applause
     if (!soundOn) return;
-    var snd = SOUNDS[good ? 'good' : 'bad'];
+    var snd = SOUNDS[kind === 'end' ? 'end' : kind ? 'good' : 'bad'];
     try {
       snd.pause();
       snd.currentTime = 0;
@@ -355,12 +365,12 @@
   }
 
   // Emoji confetti flying out of a point, animated with the Web Animations API.
-  function burst(x, y, count) {
+  function burst(x, y, count, emojis) {
     if (REDUCED || !document.body.animate) return;
     for (var i = 0; i < count; i++) {
       var el = document.createElement('span');
       el.className = 'confetti';
-      el.textContent = pick(CONFETTI);
+      el.textContent = pick(emojis || CONFETTI);
       document.body.appendChild(el);
       var angle = Math.random() * Math.PI * 2;
       var dist = 140 + Math.random() * 260;
@@ -382,6 +392,28 @@
     if (bumped) {
       s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump');
     }
+  }
+
+  // A star flies from the right answer up to the score in the top-right corner.
+  function flyStar(fromEl, onLand) {
+    var score_el = $('score');
+    if (REDUCED || !document.body.animate) { onLand(); return; }
+    var a = fromEl.getBoundingClientRect(), t = score_el.getBoundingClientRect();
+    var sx = a.left + a.width / 2, sy = a.top + a.height / 2;
+    var tx = t.left + 22, ty = t.top + t.height / 2;       // the ⭐ at the start of the score
+    var mx = sx + (tx - sx) * .45, my = sy + (ty - sy) * .45 - 90;   // bows above the straight line, stays on screen
+    var el = document.createElement('span');
+    el.className = 'flystar';
+    el.textContent = '⭐';
+    document.body.appendChild(el);
+    var c = function (x, y, sc, r) { return 'translate(' + x + 'px,' + y + 'px) translate(-50%,-50%) scale(' + sc + ') rotate(' + r + 'deg)'; };
+    var anim = el.animate([
+      { transform: c(sx, sy, .3, 0), opacity: 0 },
+      { transform: c(sx, sy - 30, 1.5, 0), opacity: 1, offset: .2, easing: 'ease-in-out' },
+      { transform: c(mx, my, 1.2, 180), opacity: 1, offset: .55, easing: 'ease-in' },
+      { transform: c(tx, ty, .55, 360), opacity: 1 }
+    ], { duration: 1100, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+    anim.onfinish = function () { el.remove(); onLand(); };
   }
 
   function start() {
@@ -446,14 +478,17 @@
       mark.textContent = '✅';
       $('options').classList.add('locked');
       $('picture').classList.add('solved');
-      if (!triedWrong) { score++; setScore(true); }
+      if (!triedWrong) {            // a star only for answers that were right on the first try
+        score++;
+        flyStar(btn, function () { setScore(true); });
+      }
       var n = Math.floor(Math.random() * PRAISE.length);
       fb.className = 'feedback good show';
       fb.textContent = PRAISE_EMOJI[n] + ' ' + PRAISE[n];
       $('next').textContent = index === ITEMS.length - 1 ? 'Finish 🏁' : 'Next ➜';
       $('next').classList.add('show');
       var r = btn.getBoundingClientRect();
-      burst(r.left + r.width / 2, r.top + r.height / 2, triedWrong ? 10 : 18);
+      burst(r.left + r.width / 2, r.top + r.height / 2, triedWrong ? 6 : 10);
       beep(true);
     } else {
       triedWrong = true;
@@ -468,16 +503,15 @@
 
   function finish() {
     $('bar').style.transform = 'scaleX(1)';
-    $('final').textContent = '🎯 You got ' + score + ' out of ' + ITEMS.length + ' on the first try!';
-    var n = score >= 7 ? 3 : score >= 4 ? 2 : 1;
-    var stars = '';
-    for (var i = 0; i < n; i++) stars += '<span style="--i:' + i + '">🌟</span>';
-    $('stars').innerHTML = stars;
+    setScore(false);
+    $('stars').textContent = '⭐ ' + score + ' / ' + ITEMS.length;
     document.body.classList.add('finished');
     setTimeout(function () {
-      burst(window.innerWidth * .25, window.innerHeight * .6, 16);
-      burst(window.innerWidth * .75, window.innerHeight * .6, 16);
-      beep(true);
+      var W = window.innerWidth, H = window.innerHeight, F = ['🥳'];
+      burst(W * .2, H * .65, 14, F);
+      burst(W * .8, H * .65, 14, F);
+      burst(W * .5, H * .8, 14, F);
+      beep('end');
     }, 250);
   }
 
