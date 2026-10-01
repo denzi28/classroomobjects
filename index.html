@@ -33,6 +33,7 @@
     touch-action: manipulation;
   }
   header {
+    flex-wrap: wrap;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -193,6 +194,7 @@
   .done .stars { font-size: clamp(56px, 10vw, 150px); font-weight: bold; animation: pop .7s var(--ease-spring) .3s backwards; }
   .done .stars span { display: inline-block; animation: pop .7s var(--ease-spring) both; animation-delay: calc(var(--i) * 180ms + 200ms); }
   .done .next { opacity: 1; transform: none; pointer-events: auto; align-self: center; }
+  body.mode12 #nextActivity { display: none; }   /* nothing after Activity 1.2 yet */
   body.finished main > :not(.done) { display: none; }
   body.finished .done { display: flex; animation: enter .6s var(--ease-out) both; }
 
@@ -226,8 +228,8 @@
 <header>
   <h1>🏫 Classroom Objects</h1>
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" aria-selected="true">🔍 Activity 1 · What is it?</button>
-    <button class="tab" role="tab" aria-selected="false" disabled title="Coming soon">🤔 Activity 2 · Is it …?</button>
+    <button class="tab" role="tab" id="tab1" aria-selected="true">🔍 Activity 1 · What is it?</button>
+    <button class="tab" role="tab" id="tab12" aria-selected="false">🤔 Activity 1.2 · Is it …?</button>
   </div>
   <button class="tab" id="sound" title="Sound on/off" aria-label="Sound">🔊</button>
   <div class="score" id="score">⭐ 0 / 8</div>
@@ -333,7 +335,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var LETTERS = ['A', 'B', 'C'];
-  var order, index, score, answered, triedWrong, busy;
+  var mode = '1', Q, index, score, answered, triedWrong, busy, gen = 0;
 
   function shuffle(a) {
     a = a.slice();
@@ -420,16 +422,45 @@
     setTimeout(land, DUR + 600);     // safety net if the tab was in the background and frames were paused
   }
 
-  function start() {
-    order = shuffle(ITEMS);
+  // Activity 1.2 questions: half of them are true ("Is it a desk?" on a desk), half are not.
+  function buildQuestions() {
+    var yes = shuffle([true, true, true, true, false, false, false, false]);
+    return shuffle(ITEMS).map(function (item, i) {
+      var claim = yes[i] ? item : pick(ITEMS.filter(function (x) { return x !== item; }));
+      return { item: item, claim: claim };
+    });
+  }
+
+  function start(m) {
+    mode = m || mode;
+    gen++;
+    document.body.classList.toggle('mode12', mode === '1.2');
+    $('tab1').setAttribute('aria-selected', mode === '1');
+    $('tab12').setAttribute('aria-selected', mode === '1.2');
+    Q = mode === '1.2' ? buildQuestions() : shuffle(ITEMS).map(function (item) { return { item: item }; });
     index = 0; score = 0; busy = false;
     document.body.classList.remove('finished');
     setScore(false);
-    render(true);
+    render();
   }
 
-  function render(first) {
-    var item = order[index];
+  function renderOptions(list, onPick) {
+    var box = $('options');
+    box.className = 'options';
+    box.innerHTML = '';
+    list.forEach(function (c, i) {
+      var b = document.createElement('button');
+      b.className = 'option';
+      b.style.setProperty('--i', i);
+      b.innerHTML = '<span class="letter">' + c.letter + '</span><span class="label">' + c.text + '</span><span class="mark"></span>';
+      b.addEventListener('click', function () { onPick(b, c.right); });
+      box.appendChild(b);
+    });
+  }
+
+  function render() {
+    gen++;
+    var q = Q[index], item = q.item;
     answered = false; triedWrong = false;
     var pic = $('picture');
     pic.classList.remove('solved', 'leaving');
@@ -439,24 +470,54 @@
     $('feedback').className = 'feedback';
     $('feedback').textContent = '';
 
-    var wrongOnes = shuffle(ITEMS.filter(function (x) { return x !== item; })).slice(0, 2);
-    var choices = shuffle([item].concat(wrongOnes));
-    var box = $('options');
-    box.className = 'options';
-    box.innerHTML = '';
-    choices.forEach(function (c, i) {
-      var b = document.createElement('button');
-      b.className = 'option';
-      b.style.setProperty('--i', i);
-      b.innerHTML = '<span class="letter">' + LETTERS[i] + '</span><span class="label">' + c.article + ' ' + c.name + '</span><span class="mark"></span>';
-      b.addEventListener('click', function () { choose(b, c === item); });
-      box.appendChild(b);
-    });
+    if (mode === '1') {
+      $('question').innerHTML = 'What is it? <span class="q-emoji">🤔</span>';
+      var wrongOnes = shuffle(ITEMS.filter(function (x) { return x !== item; })).slice(0, 2);
+      renderOptions(shuffle([item].concat(wrongOnes)).map(function (c, i) {
+        return { letter: LETTERS[i], text: c.article + ' ' + c.name, right: c === item };
+      }), function (b, right) { choose(b, right, solve); });
+    } else {
+      // step 1: "Is it a book?"  ->  Yes / No
+      var isYes = q.claim === item;
+      $('question').innerHTML = 'Is it ' + q.claim.article + ' ' + q.claim.name + '? <span class="q-emoji">🤔</span>';
+      renderOptions([
+        { letter: '👍', text: 'Yes, it is.', right: isYes },
+        { letter: '👎', text: "No, it isn't.", right: !isYes }
+      ], function (b, right) { choose(b, right, isYes ? solve : afterNo); });
+    }
 
     // slide the new question in
     [pic, $('question')].forEach(function (el) {
       el.classList.remove('entering'); void el.offsetWidth; el.classList.add('entering');
     });
+  }
+
+  // Activity 1.2, step 2: after "No, it isn't." ask "Then what is it?" with two choices.
+  function afterNo(btn) {
+    var q = Q[index], g = gen;
+    busy = true;                                    // ignore taps while we switch questions
+    var fb = $('feedback');
+    fb.className = 'feedback good show';
+    fb.textContent = "👍 Right! It isn't " + q.claim.article + ' ' + q.claim.name + '.';
+    beep(true);
+    setTimeout(function () {
+      if (g !== gen) return;                        // the activity was restarted meanwhile
+      var els = [$('question'), $('options'), $('feedback')];
+      els.forEach(function (el) { el.classList.remove('entering'); el.classList.add('leaving'); });
+      setTimeout(function () {
+        if (g !== gen) return;
+        els.forEach(function (el) { el.classList.remove('leaving'); });
+        fb.className = 'feedback';
+        fb.textContent = '';
+        $('question').innerHTML = 'Then what is it? <span class="q-emoji">🤔</span>';
+        var other = pick(ITEMS.filter(function (x) { return x !== q.item && x !== q.claim; }));
+        renderOptions(shuffle([q.item, other]).map(function (c, i) {
+          return { letter: LETTERS[i], text: c.article + ' ' + c.name, right: c === q.item };
+        }), function (b, right) { choose(b, right, solve); });
+        $('question').classList.remove('entering'); void $('question').offsetWidth; $('question').classList.add('entering');
+        busy = false;
+      }, 230);
+    }, 1000);
   }
 
   function transitionTo(fn) {
@@ -471,28 +532,16 @@
     }, 230);
   }
 
-  function choose(btn, isRight) {
+  // A tap on an answer. `onRight` decides what a right answer leads to.
+  function choose(btn, isRight, onRight) {
     if (answered || busy || btn.classList.contains('wrong')) return;
     var fb = $('feedback');
     var mark = btn.querySelector('.mark');
     if (isRight) {
-      answered = true;
       btn.classList.add('correct');
       mark.textContent = '✅';
       $('options').classList.add('locked');
-      $('picture').classList.add('solved');
-      if (!triedWrong) {            // a star only for answers that were right on the first try
-        score++;
-        flyStar(btn, function () { setScore(true); });
-      }
-      var n = Math.floor(Math.random() * PRAISE.length);
-      fb.className = 'feedback good show';
-      fb.textContent = PRAISE_EMOJI[n] + ' ' + PRAISE[n];
-      $('next').textContent = index === ITEMS.length - 1 ? 'Finish 🏁' : 'Next ➜';
-      $('next').classList.add('show');
-      var r = btn.getBoundingClientRect();
-      burst(r.left + r.width / 2, r.top + r.height / 2, triedWrong ? 6 : 10);
-      beep(true);
+      onRight(btn);
     } else {
       triedWrong = true;
       btn.classList.add('wrong');
@@ -502,6 +551,25 @@
       fb.style.animation = 'none'; void fb.offsetWidth; fb.style.animation = '';
       beep(false);
     }
+  }
+
+  // The question is solved: star (only if nothing went wrong), praise, Next button.
+  function solve(btn) {
+    var fb = $('feedback');
+    answered = true;
+    $('picture').classList.add('solved');
+    if (!triedWrong) {            // a star only for questions answered right on the first try
+      score++;
+      flyStar(btn, function () { setScore(true); });
+    }
+    var n = Math.floor(Math.random() * PRAISE.length);
+    fb.className = 'feedback good show';
+    fb.textContent = PRAISE_EMOJI[n] + ' ' + PRAISE[n];
+    $('next').textContent = index === ITEMS.length - 1 ? 'Finish 🏁' : 'Next ➜';
+    $('next').classList.add('show');
+    var r = btn.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height / 2, triedWrong ? 6 : 10);
+    beep(true);
   }
 
   function finish() {
@@ -522,14 +590,16 @@
     if (!answered) return;
     if (index === ITEMS.length - 1) { transitionTo(finish); } else { transitionTo(function () { index++; render(); }); }
   });
-  // "Next activity" has no action yet.
+  $('nextActivity').addEventListener('click', function () { if (mode === '1') start('1.2'); });
+  $('tab1').addEventListener('click', function () { if (mode !== '1') start('1'); });
+  $('tab12').addEventListener('click', function () { if (mode !== '1.2') start('1.2'); });
   $('sound').addEventListener('click', function () {
     soundOn = !soundOn;
     this.textContent = soundOn ? '🔊' : '🔇';
     if (soundOn) beep(true);   // also a quick sound check
   });
 
-  start();
+  start('1');
 })();
 </script>
 </body>
