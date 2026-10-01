@@ -248,7 +248,7 @@
   <section class="done">
     <h2>Well done!</h2>
     <div class="stars" id="stars"></div>
-    <button class="next" id="again">🔄 Play again</button>
+    <button class="next" id="nextActivity">Next activity ➜</button>
   </section>
 </main>
 
@@ -519,7 +519,7 @@
     if (!answered) return;
     if (index === ITEMS.length - 1) { transitionTo(finish); } else { transitionTo(function () { index++; render(); }); }
   });
-  $('again').addEventListener('click', start);
+  // "Next activity" has no action yet.
   $('sound').addEventListener('click', function () {
     soundOn = !soundOn;
     this.textContent = soundOn ? '🔊' : '🔇';
