@@ -339,96 +339,19 @@
   }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
-  var audio, noise;
-  function ctx() {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state === 'suspended') audio.resume();
-    return audio;
-  }
-
-  // Applause: a cheerful chime, then lots of soft claps in a small "room" (reverb).
-  var reverb;
-  function room(a) {
-    if (reverb) return reverb;
-    var len = Math.floor(a.sampleRate * 0.7), ir = a.createBuffer(2, len, a.sampleRate);
-    for (var ch = 0; ch < 2; ch++) {
-      var d = ir.getChannelData(ch);
-      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-    }
-    reverb = a.createConvolver(); reverb.buffer = ir;
-    return reverb;
-  }
-
-  function chime(a, t0) {
-    [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
-      var o = a.createOscillator(), g = a.createGain(), t = t0 + i * 0.075;
-      o.type = 'triangle'; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-      o.connect(g); g.connect(a.destination);
-      o.start(t); o.stop(t + 0.5);
-    });
-  }
-
-  function applause(big) {
-    var a = ctx();
-    if (!noise) {
-      noise = a.createBuffer(1, a.sampleRate, a.sampleRate);
-      var d = noise.getChannelData(0);
-      for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    }
-    var t0 = a.currentTime + 0.02;
-    var dur = big ? 3.4 : 2.0;
-    chime(a, t0);
-
-    // everything goes through one master gain: quick swell, then a long fade-out
-    var master = a.createGain(), dry = a.createGain(), wet = a.createGain(), rv = room(a);
-    master.gain.setValueAtTime(0.0001, t0 + 0.1);
-    master.gain.exponentialRampToValueAtTime(1, t0 + 0.4);
-    master.gain.setValueAtTime(1, t0 + dur * 0.55);
-    master.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    dry.gain.value = 0.8; wet.gain.value = 0.55;
-    master.connect(dry); dry.connect(a.destination);
-    master.connect(wet); wet.connect(rv); rv.connect(a.destination);
-
-    var claps = Math.round(dur * (big ? 85 : 70));
-    for (var c = 0; c < claps; c++) {
-      var t = t0 + 0.15 + Math.random() * (dur - 0.3);
-      var src = a.createBufferSource(), hp = a.createBiquadFilter(), bp = a.createBiquadFilter(), g = a.createGain();
-      src.buffer = noise;
-      hp.type = 'highpass'; hp.frequency.value = 500;
-      bp.type = 'peaking'; bp.frequency.value = 1400 + Math.random() * 1400; bp.Q.value = 0.7; bp.gain.value = 8;
-      var level = 0.12 + Math.random() * 0.22;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(level, t + 0.003);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.022 + Math.random() * 0.03);
-      src.connect(hp); hp.connect(bp); bp.connect(g); g.connect(master);
-      src.start(t, Math.random() * 0.8, 0.09);
-    }
-  }
-
-  // Wrong answer: a low "dit dit" buzzer.
-  function buzzer() {
-    var a = ctx();
-    [0, 0.2].forEach(function (off) {
-      var o = a.createOscillator(), lp = a.createBiquadFilter(), g = a.createGain();
-      var t = a.currentTime + 0.01 + off;
-      o.type = 'sawtooth'; o.frequency.value = 150;
-      lp.type = 'lowpass'; lp.frequency.value = 900;
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.28, t + 0.01);
-      g.gain.setValueAtTime(0.28, t + 0.11);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
-      o.connect(lp); lp.connect(g); g.connect(a.destination);
-      o.start(t); o.stop(t + 0.16);
-    });
-  }
-
+  // Recorded sounds (already at half volume). Each play restarts from the beginning.
+  var SOUNDS = { good: new Audio('sounds/correct.mp3'), bad: new Audio('sounds/wrong.mp3') };
+  Object.keys(SOUNDS).forEach(function (k) { SOUNDS[k].preload = 'auto'; });
   var soundOn = true;
-  function beep(good, big) {
+  function beep(good) {
     if (!soundOn) return;
-    try { if (good) applause(big); else buzzer(); } catch (e) { /* sound is optional */ }
+    var snd = SOUNDS[good ? 'good' : 'bad'];
+    try {
+      snd.pause();
+      snd.currentTime = 0;
+      var p = snd.play();
+      if (p && p.catch) p.catch(function () { /* blocked until the first tap; sound is optional */ });
+    } catch (e) { /* sound is optional */ }
   }
 
   // Emoji confetti flying out of a point, animated with the Web Animations API.
@@ -554,7 +477,7 @@
     setTimeout(function () {
       burst(window.innerWidth * .25, window.innerHeight * .6, 16);
       burst(window.innerWidth * .75, window.innerHeight * .6, 16);
-      beep(true, true);
+      beep(true);
     }, 250);
   }
 
