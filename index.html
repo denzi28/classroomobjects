@@ -422,12 +422,36 @@
     setTimeout(land, DUR + 600);     // safety net if the tab was in the background and frames were paused
   }
 
-  // Activity 1.2 questions: half of them are true ("Is it a desk?" on a desk), half are not.
+  // Activity 1.2 questions: half are true ("Is it a desk?" on a desk), half are not.
+  // The order is mixed so that no more than 2 of the same kind come in a row,
+  // and the same "Is it a ...?" never appears twice in a row.
   function buildQuestions() {
-    var yes = shuffle([true, true, true, true, false, false, false, false]);
+    for (var attempt = 0; attempt < 500; attempt++) {
+      var yes = shuffle([true, true, true, true, false, false, false, false]);
+      var run = 1, tooLong = false;
+      for (var i = 1; i < yes.length; i++) {
+        run = yes[i] === yes[i - 1] ? run + 1 : 1;
+        if (run > 2) { tooLong = true; break; }
+      }
+      if (tooLong) continue;
+
+      var items = shuffle(ITEMS), list = [], ok = true;
+      for (var j = 0; j < items.length && ok; j++) {
+        var prev = list.length ? list[list.length - 1].claim : null, claim;
+        if (yes[j]) {
+          claim = items[j];
+        } else {
+          var options = ITEMS.filter(function (x) { return x !== items[j] && x !== prev; });
+          claim = pick(options);
+        }
+        if (claim === prev) ok = false;
+        list.push({ item: items[j], claim: claim });
+      }
+      if (ok) return list;
+    }
+    // (practically unreachable) fall back to a plain shuffle
     return shuffle(ITEMS).map(function (item, i) {
-      var claim = yes[i] ? item : pick(ITEMS.filter(function (x) { return x !== item; }));
-      return { item: item, claim: claim };
+      return { item: item, claim: i % 2 ? pick(ITEMS.filter(function (x) { return x !== item; })) : item };
     });
   }
 
