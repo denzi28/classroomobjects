@@ -220,9 +220,6 @@
     main { grid-template-columns: 1fr; overflow: auto; }
     .picture svg { max-height: 34vh; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; }
-  }
 </style>
 </head>
 <body>
@@ -336,7 +333,6 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var LETTERS = ['A', 'B', 'C'];
-  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var order, index, score, answered, triedWrong, busy;
 
   function shuffle(a) {
@@ -366,7 +362,7 @@
 
   // Emoji confetti flying out of a point, animated with the Web Animations API.
   function burst(x, y, count, emojis) {
-    if (REDUCED || !document.body.animate) return;
+    if (!document.body.animate) return;
     for (var i = 0; i < count; i++) {
       var el = document.createElement('span');
       el.className = 'confetti';
@@ -395,25 +391,33 @@
   }
 
   // A star flies from the right answer up to the score in the top-right corner.
+  // Plain requestAnimationFrame, so it works in every browser and ignores "reduce motion" settings.
   function flyStar(fromEl, onLand) {
-    var score_el = $('score');
-    if (REDUCED || !document.body.animate) { onLand(); return; }
-    var a = fromEl.getBoundingClientRect(), t = score_el.getBoundingClientRect();
+    var target = $('score');
+    var a = fromEl.getBoundingClientRect(), t = target.getBoundingClientRect();
     var sx = a.left + a.width / 2, sy = a.top + a.height / 2;
-    var tx = t.left + 22, ty = t.top + t.height / 2;       // the ⭐ at the start of the score
-    var mx = sx + (tx - sx) * .45, my = sy + (ty - sy) * .45 - 90;   // bows above the straight line, stays on screen
+    var tx = t.left + 22, ty = t.top + t.height / 2;          // the ⭐ at the start of the score
+    var cx = sx + (tx - sx) * .35, cy = Math.max(30, Math.min(sy, ty) - 120);   // curve control point, kept on screen
     var el = document.createElement('span');
     el.className = 'flystar';
     el.textContent = '⭐';
     document.body.appendChild(el);
-    var c = function (x, y, sc, r) { return 'translate(' + x + 'px,' + y + 'px) translate(-50%,-50%) scale(' + sc + ') rotate(' + r + 'deg)'; };
-    var anim = el.animate([
-      { transform: c(sx, sy, .3, 0), opacity: 0 },
-      { transform: c(sx, sy - 30, 1.5, 0), opacity: 1, offset: .2, easing: 'ease-in-out' },
-      { transform: c(mx, my, 1.2, 180), opacity: 1, offset: .55, easing: 'ease-in' },
-      { transform: c(tx, ty, .55, 360), opacity: 1 }
-    ], { duration: 1100, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
-    anim.onfinish = function () { el.remove(); onLand(); };
+    var DUR = 1100, t0 = null, landed = false;
+    function land() { if (landed) return; landed = true; el.remove(); onLand(); }
+    function ease(x) { return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }   // easeInOutCubic
+    function frame(now) {
+      if (t0 === null) t0 = now;
+      var k = Math.min(1, (now - t0) / DUR), e = ease(k), u = 1 - e;
+      var x = u * u * sx + 2 * u * e * cx + e * e * tx;
+      var y = u * u * sy + 2 * u * e * cy + e * e * ty;
+      var scale = k < .2 ? .3 + 1.2 * (k / .2) : 1.5 - .95 * ((k - .2) / .8);   // pop up, then shrink toward the score
+      el.style.opacity = k < .1 ? k / .1 : 1;
+      el.style.transform = 'translate(' + x + 'px,' + y + 'px) translate(-50%,-50%) scale(' + scale + ') rotate(' + (e * 360) + 'deg)';
+      if (k < 1) requestAnimationFrame(frame); else land();
+    }
+    el.style.opacity = 0;
+    requestAnimationFrame(frame);
+    setTimeout(land, DUR + 600);     // safety net if the tab was in the background and frames were paused
   }
 
   function start() {
@@ -459,7 +463,6 @@
     if (busy) return;
     busy = true;
     var leaving = [$('picture'), $('question'), $('options'), $('feedback'), $('next')];
-    if (REDUCED) { fn(); busy = false; return; }
     leaving.forEach(function (el) { el.classList.remove('entering'); el.classList.add('leaving'); });
     setTimeout(function () {
       leaving.forEach(function (el) { el.classList.remove('leaving'); });
