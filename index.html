@@ -82,6 +82,7 @@
     align-items: stretch;
   }
   .picture {
+    position: relative;
     background: var(--card);
     border: 4px solid var(--line);
     border-radius: 28px;
@@ -196,9 +197,74 @@
   .done .stars { font-size: clamp(56px, 10vw, 150px); font-weight: bold; animation: pop .7s var(--ease-spring) .3s backwards; }
   .done .stars span { display: inline-block; animation: pop .7s var(--ease-spring) both; animation-delay: calc(var(--i) * 180ms + 200ms); }
   .done .next { opacity: 1; transform: none; pointer-events: auto; align-self: center; }
-  body.mode12 #nextActivity { display: none; }   /* nothing after Activity 1.2 yet */
+  body.mode13 #nextActivity { display: none; }   /* nothing after Activity 1.3 yet */
   body.finished main > :not(.done) { display: none; }
   body.finished .done { display: flex; animation: enter .6s var(--ease-out) both; }
+
+  /* ---------- picture wrapper + drag and drop (Activity 1.3) ---------- */
+  .art { width: 100%; height: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  body.mode13 .art { cursor: grab; touch-action: none; }
+  .picture.dragging .art svg { animation: none; opacity: .22; }
+  .picture.dragging .art { cursor: grabbing; }
+  .ghost {
+    position: fixed; left: 0; top: 0; z-index: 30;
+    pointer-events: none;
+    filter: drop-shadow(0 14px 14px rgba(0,0,0,.28));
+    will-change: transform;
+  }
+  .ghost svg { width: 100%; height: 100%; display: block; }
+  .option.zone { border-style: dashed; background: #fffdf7; }
+  .option.zone.over { border-color: var(--accent); border-style: solid; background: #eaf2ff; transform: scale(1.04); }
+  .option.zone.correct { border-style: solid; }
+  .option.zone.nudge { animation: shake .4s ease; }
+  @media (hover: hover) { .option.zone:hover { transform: none; box-shadow: none; } .option.zone.over:hover { transform: scale(1.04); } }
+  .feedback.hint { color: var(--muted); }
+
+  /* ---------- the pencil mascot ---------- */
+  .mascot { position: absolute; right: 14px; bottom: 10px; width: clamp(112px, 9vw, 160px); pointer-events: none; z-index: 2; }
+  .mascot svg { width: 100%; display: block; overflow: visible; }
+  .mascot.big { position: relative; right: auto; bottom: auto; width: clamp(110px, 16vw, 190px); margin: 0 auto; }
+  body:not(.finished) .mascot.big { display: none; }
+  .m-body { transform-origin: 60px 186px; animation: mbob 3s ease-in-out infinite; }
+  @keyframes mbob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
+  .m-eyes { transform-origin: 60px 82px; animation: mblink 4.2s infinite; }
+  @keyframes mblink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  .m-arm { transition: transform .35s var(--ease-spring); }
+  .m-arm.l { transform-origin: 26px 108px; }
+  .m-arm.r { transform-origin: 94px 108px; }
+  .mascot [class*="show-"] { display: none; }
+  .mascot[data-mood="idle"] .show-idle, .mascot[data-mood="idle"] .show-open,
+  .mascot[data-mood="happy"] .show-happy,
+  .mascot[data-mood="sad"] .show-sad, .mascot[data-mood="sad"] .show-open { display: inline; }
+  .mascot[data-mood="happy"] .m-body { animation: mjump .6s var(--ease-spring) 3; }
+  .mascot[data-mood="happy"] .m-arm.l { transform: rotate(125deg); }
+  .mascot[data-mood="happy"] .m-arm.r { transform: rotate(-125deg); }
+  .mascot[data-mood="sad"] .m-body { animation: mshake .5s ease 1, mdroop 0s .5s forwards; }
+  .mascot.big[data-mood="happy"] .m-body { animation-iteration-count: infinite; }
+  @keyframes mjump {
+    0% { transform: translateY(0) scale(1.06, .92); }
+    45% { transform: translateY(-26px) scale(.96, 1.06) rotate(-4deg); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @keyframes mshake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+  @keyframes mdroop { to { transform: rotate(-3deg) translateY(2px); } }
+  .bubble {
+    position: absolute; right: 78%; bottom: 76%;
+    min-width: 90px; max-width: 220px;
+    padding: 8px 14px;
+    background: #fff; border: 3px solid var(--ink); border-radius: 18px;
+    font-size: 20px; font-weight: bold; text-align: center; line-height: 1.2;
+    opacity: 0; transform: scale(.4); transform-origin: 100% 100%;
+    transition: opacity .2s, transform .45s var(--ease-spring);
+    white-space: nowrap;
+  }
+  .bubble::after {
+    content: ""; position: absolute; right: 14px; bottom: -11px; width: 16px; height: 16px;
+    background: #fff; border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink);
+    transform: rotate(45deg);
+  }
+  .bubble.show { opacity: 1; transform: scale(1); }
+  .mascot.big .bubble { right: 90%; bottom: 60%; font-size: 26px; }
 
   .flystar {
     position: fixed;
@@ -256,6 +322,14 @@
     .done .stars { font-size: 64px; }
     .confetti { font-size: 26px; }
     .flystar { font-size: 40px; }
+    .tab .w { display: none; }
+    .tabs .tab { padding: 7px 6px; font-size: 13px; }
+    body.mode13 .picture { height: 24vh; min-height: 150px; }
+    .mascot { width: 58px; right: 8px; bottom: 6px; }
+    .bubble { font-size: 13px; padding: 4px 9px; border-width: 2px; min-width: 0; max-width: 150px; border-radius: 12px; }
+    .bubble::after { width: 10px; height: 10px; bottom: -7px; border-width: 2px; }
+    .mascot.big { width: 110px; }
+    .mascot.big .bubble { font-size: 18px; right: 40%; bottom: 100%; }
   }
 </style>
 </head>
@@ -264,8 +338,9 @@
 <header>
   <h1>🏫 Classroom Objects</h1>
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab1" aria-selected="true">🔍 Activity 1 · What is it?</button>
-    <button class="tab" role="tab" id="tab12" aria-selected="false">🤔 Activity 1.2 · Is it …?</button>
+    <button class="tab" role="tab" id="tab1" aria-selected="true">🔍 <span class="w">Activity </span>1 · What is it?</button>
+    <button class="tab" role="tab" id="tab12" aria-selected="false">🤔 <span class="w">Activity </span>1.2 · Is it …?</button>
+    <button class="tab" role="tab" id="tab13" aria-selected="false">✋ <span class="w">Activity </span>1.3 · Drag it</button>
   </div>
   <button class="tab" id="sound" title="Sound on/off" aria-label="Sound">🔊</button>
   <div class="score" id="score">⭐ 0 / 8</div>
@@ -274,7 +349,10 @@
 </div>
 
 <main>
-  <div class="picture" id="picture" aria-live="polite"></div>
+  <div class="picture" id="picture" aria-live="polite">
+    <div class="art" id="art"></div>
+    <div class="mascot" id="mascotA"></div>
+  </div>
   <section class="quiz">
     <p class="question" id="question">What is it? <span class="q-emoji">🤔</span></p>
     <div class="options" id="options"></div>
@@ -282,6 +360,7 @@
     <button class="next" id="next">Next ➜</button>
   </section>
   <section class="done">
+    <div class="mascot big" id="mascotB"></div>
     <h2>Well done!</h2>
     <div class="stars" id="stars"></div>
     <button class="next" id="nextActivity">Next activity ➜</button>
@@ -372,7 +451,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var LETTERS = ['A', 'B', 'C'];
-  var mode = '1', Q, index, score, answered, triedWrong, busy, gen = 0;
+  var mode = '1', Q, index, score, answered, triedWrong, busy, gen = 0, streak = 0;
 
   function shuffle(a) {
     a = a.slice();
@@ -397,6 +476,60 @@
       var p = snd.play();
       if (p && p.catch) p.catch(function () { /* blocked until the first tap; sound is optional */ });
     } catch (e) { /* sound is optional */ }
+  }
+
+  // ---------- the pencil mascot ----------
+  var MASCOT_SVG =
+    '<svg viewBox="0 0 120 190" aria-hidden="true"><g class="m-body">' +
+      '<rect x="38" y="160" width="12" height="22" rx="6" fill="#2b2d42"/><rect x="70" y="160" width="12" height="22" rx="6" fill="#2b2d42"/>' +
+      '<ellipse cx="42" cy="184" rx="13" ry="5.5" fill="#e5484d" ' + W + '/><ellipse cx="78" cy="184" rx="13" ry="5.5" fill="#e5484d" ' + W + '/>' +
+      '<g class="m-arm l"><path d="M28 108 Q10 114 6 132" fill="none" stroke="#2b2d42" stroke-width="7" stroke-linecap="round"/><circle cx="6" cy="134" r="8" fill="#ffd9a8" ' + W + '/></g>' +
+      '<g class="m-arm r"><path d="M92 108 Q110 114 114 132" fill="none" stroke="#2b2d42" stroke-width="7" stroke-linecap="round"/><circle cx="114" cy="134" r="8" fill="#ffd9a8" ' + W + '/></g>' +
+      '<rect x="30" y="142" width="60" height="22" rx="9" fill="#f4a6b8" ' + W + '/>' +
+      '<rect x="30" y="132" width="60" height="12" fill="#c9ccd6" ' + W + '/>' +
+      '<rect x="30" y="52" width="60" height="82" fill="#ffb627" ' + W + '/>' +
+      '<line x1="38" y1="56" x2="38" y2="130" stroke="#e59a00" stroke-width="3" stroke-linecap="round"/><line x1="82" y1="56" x2="82" y2="130" stroke="#e59a00" stroke-width="3" stroke-linecap="round"/>' +
+      '<polygon points="30,52 90,52 60,10" fill="#f6d8a8" ' + W + '/>' +
+      '<polygon points="51,24 69,24 60,10" fill="#2b2d42" ' + W + '/>' +
+      '<ellipse cx="42" cy="98" rx="6" ry="4" fill="#ff8fa3" opacity=".7"/><ellipse cx="78" cy="98" rx="6" ry="4" fill="#ff8fa3" opacity=".7"/>' +
+      '<g class="m-eyes show-open"><circle cx="48" cy="82" r="8" fill="#fff" ' + W + '/><circle cx="72" cy="82" r="8" fill="#fff" ' + W + '/>' +
+        '<circle cx="49" cy="83" r="4" fill="#2b2d42"/><circle cx="73" cy="83" r="4" fill="#2b2d42"/>' +
+        '<circle cx="50.5" cy="81" r="1.4" fill="#fff"/><circle cx="74.5" cy="81" r="1.4" fill="#fff"/></g>' +
+      '<g class="show-happy"><path d="M40 84 Q48 74 56 84" fill="none" stroke="#2b2d42" stroke-width="3.5" stroke-linecap="round"/><path d="M64 84 Q72 74 80 84" fill="none" stroke="#2b2d42" stroke-width="3.5" stroke-linecap="round"/></g>' +
+      '<g class="show-sad"><path d="M40 72 L56 76" stroke="#2b2d42" stroke-width="3" stroke-linecap="round"/><path d="M80 72 L64 76" stroke="#2b2d42" stroke-width="3" stroke-linecap="round"/><path d="M42 96 Q40 104 44 106" fill="none" stroke="#4aa3ff" stroke-width="3" stroke-linecap="round"/></g>' +
+      '<path class="show-idle" d="M52 102 Q60 109 68 102" fill="none" stroke="#2b2d42" stroke-width="3.5" stroke-linecap="round"/>' +
+      '<g class="show-happy"><path d="M48 99 Q60 122 72 99 Z" fill="#7a1f2b" ' + W + '/><path d="M54 111 Q60 106 66 111 Q60 117 54 111 Z" fill="#ff8fa3"/></g>' +
+      '<path class="show-sad" d="M52 110 Q60 100 68 110" fill="none" stroke="#2b2d42" stroke-width="3.5" stroke-linecap="round"/>' +
+    '</g></svg>';
+
+  var mascots = [];
+  var moodTimer;
+  function mascotInit() {
+    ['mascotA', 'mascotB'].forEach(function (id) {
+      var el = $(id);
+      el.innerHTML = MASCOT_SVG + '<div class="bubble"></div>';
+      el.setAttribute('data-mood', 'idle');
+      mascots.push(el);
+    });
+  }
+  // mood: 'idle' | 'happy' | 'sad'. hold = keep the mood until the next call.
+  function mascotSay(mood, text, hold) {
+    mascots.forEach(function (el) {
+      el.setAttribute('data-mood', 'idle'); void el.offsetWidth;      // restart the animation
+      el.setAttribute('data-mood', mood);
+      var b = el.querySelector('.bubble');
+      b.classList.remove('show');
+      if (text) { b.textContent = text; void b.offsetWidth; b.classList.add('show'); }
+    });
+    clearTimeout(moodTimer);
+    if (!hold) moodTimer = setTimeout(mascotReset, 2000);
+  }
+  function mascotReset() {
+    clearTimeout(moodTimer);
+    mascots.forEach(function (el) {
+      el.setAttribute('data-mood', 'idle');
+      el.querySelector('.bubble').classList.remove('show');
+    });
   }
 
   // Emoji confetti flying out of a point, animated with the Web Animations API.
@@ -495,7 +628,11 @@
   function start(m) {
     mode = m || mode;
     gen++;
-    document.body.classList.toggle('mode12', mode === '1.2');
+    cancelDrag();
+    document.body.classList.toggle('mode13', mode === '1.3');
+    $('tab13').setAttribute('aria-selected', mode === '1.3');
+    streak = 0;
+    mascotReset();
     $('tab1').setAttribute('aria-selected', mode === '1');
     $('tab12').setAttribute('aria-selected', mode === '1.2');
     Q = mode === '1.2' ? buildQuestions() : shuffle(ITEMS).map(function (item) { return { item: item }; });
@@ -505,13 +642,14 @@
     render();
   }
 
-  function renderOptions(list, onPick) {
+  function renderOptions(list, onPick, asZones) {
     var box = $('options');
     box.className = 'options';
     box.innerHTML = '';
     list.forEach(function (c, i) {
       var b = document.createElement('button');
-      b.className = 'option';
+      b.className = 'option' + (asZones ? ' zone' : '');
+      if (c.right) b.setAttribute('data-right', '1');
       b.style.setProperty('--i', i);
       b.innerHTML = '<span class="letter">' + c.letter + '</span><span class="label">' + c.text + '</span><span class="mark"></span>';
       b.addEventListener('click', function () { onPick(b, c.right); });
@@ -526,18 +664,24 @@
     answered = false; triedWrong = false;
     var pic = $('picture');
     pic.classList.remove('solved', 'leaving');
-    pic.innerHTML = '<svg viewBox="0 -8 200 168" role="img" aria-label="classroom object">' + item.svg + '</svg>';
+    pic.classList.remove('dragging');
+    $('art').innerHTML = '<svg viewBox="0 -8 200 168" role="img" aria-label="classroom object">' + item.svg + '</svg>';
     $('bar').style.transform = 'scaleX(' + (index / ITEMS.length) + ')';
     $('next').classList.remove('show');
     $('feedback').className = 'feedback';
     $('feedback').textContent = '';
 
-    if (mode === '1') {
-      $('question').innerHTML = 'What is it? <span class="q-emoji">🤔</span>';
+    if (mode === '1' || mode === '1.3') {
+      $('question').innerHTML = 'What is it? <span class="q-emoji">' + (mode === '1.3' ? '✋' : '🤔') + '</span>';
       var wrongOnes = shuffle(ITEMS.filter(function (x) { return x !== item; })).slice(0, 2);
       renderOptions(shuffle([item].concat(wrongOnes)).map(function (c, i) {
         return { letter: LETTERS[i], text: c.article + ' ' + c.name, right: c === item };
-      }), function (b, right) { choose(b, right, solve); });
+      }), mode === '1.3' ? function (b) { nudge(b); } : function (b, right) { choose(b, right, solve); }, mode === '1.3');
+      if (mode === '1.3') {
+        var fbh = $('feedback');
+        fbh.className = 'feedback hint show';
+        fbh.textContent = '✋ Drag the picture to the right word.';
+      }
     } else {
       // step 1: "Is it a book?"  ->  Yes / No
       var isYes = q.claim === item;
@@ -562,6 +706,7 @@
     fb.className = 'feedback good show';
     fb.textContent = "👍 Right! It isn't " + q.claim.article + ' ' + q.claim.name + '.';
     beep(true);
+    mascotSay('happy', 'Right! 👍');
     setTimeout(function () {
       if (g !== gen) return;                        // the activity was restarted meanwhile
       var els = [$('question'), $('options'), $('feedback')];
@@ -612,6 +757,8 @@
       fb.textContent = '🙂 Try again!';
       fb.style.animation = 'none'; void fb.offsetWidth; fb.style.animation = '';
       beep(false);
+      streak = 0;
+      mascotSay('sad', 'Oops! 🙂');
     }
   }
 
@@ -627,6 +774,8 @@
     var n = Math.floor(Math.random() * PRAISE.length);
     fb.className = 'feedback good show';
     fb.textContent = PRAISE_EMOJI[n] + ' ' + PRAISE[n];
+    streak = triedWrong ? 0 : streak + 1;
+    mascotSay('happy', streak >= 3 ? '🔥 ' + streak + ' in a row!' : PRAISE[n] + ' ' + PRAISE_EMOJI[n]);
     $('next').textContent = index === ITEMS.length - 1 ? 'Finish 🏁' : 'Next ➜';
     $('next').classList.add('show');
     setTimeout(function () { $('next').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 150);
@@ -640,6 +789,7 @@
     setScore(false);
     $('stars').textContent = '⭐ ' + score + ' / ' + ITEMS.length;
     document.body.classList.add('finished');
+    mascotSay('happy', 'Well done! 🥳', true);
     setTimeout(function () {
       var W = window.innerWidth, H = window.innerHeight, F = ['🥳'];
       burst(W * .2, H * .65, 14, F);
@@ -649,13 +799,116 @@
     }, 250);
   }
 
+  // ---------- Activity 1.3: drag the picture onto the right word ----------
+  var drag = null;
+
+  function nudge(zone) {           // tapping a word instead of dragging: a gentle hint, no penalty
+    if (answered || busy) return;
+    zone.classList.remove('nudge'); void zone.offsetWidth; zone.classList.add('nudge');
+    var fb = $('feedback');
+    fb.className = 'feedback hint show';
+    fb.textContent = '✋ Drag the picture here!';
+  }
+
+  function zoneAt(x, y) {
+    var els = document.elementsFromPoint(x, y);
+    for (var i = 0; i < els.length; i++) {
+      if (els[i].classList && els[i].classList.contains('zone')) return els[i];
+    }
+    return null;
+  }
+
+  function ghostTo(g, cx, cy, scale, tilt) {
+    g.el.style.transform = 'translate(' + (cx - g.w / 2) + 'px,' + (cy - g.h / 2) + 'px) scale(' + scale + ') rotate(' + (tilt || 0) + 'deg)';
+  }
+
+  function endDrag() {
+    if (!drag) return;
+    var g = drag; drag = null;
+    $('picture').classList.remove('dragging');
+    if (g.over) g.over.classList.remove('over');
+    return g;
+  }
+
+  function cancelDrag() {
+    var g = endDrag();
+    if (g) g.el.remove();
+  }
+
+  function springBack(g) {
+    var r = $('art').getBoundingClientRect();
+    g.el.style.transition = 'transform .4s cubic-bezier(.34,1.56,.64,1)';
+    ghostTo(g, r.left + r.width / 2, r.top + r.height / 2, 1.5, 0);
+    setTimeout(function () { g.el.remove(); }, 420);
+  }
+
+  function setupDrag() {
+    var art = $('art');
+    art.addEventListener('pointerdown', function (e) {
+      if (mode !== '1.3' || answered || busy || drag) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      var svg = art.querySelector('svg');
+      if (!svg) return;
+      e.preventDefault();
+      var w = window.innerWidth < 800 ? 110 : 230, h = w * 168 / 200;
+      var el = document.createElement('div');
+      el.className = 'ghost';
+      el.style.width = w + 'px'; el.style.height = h + 'px';
+      el.innerHTML = svg.outerHTML;
+      el.firstChild.style.animation = 'none';
+      document.body.appendChild(el);
+      drag = { el: el, w: w, h: h, over: null, id: e.pointerId };
+      try { art.setPointerCapture(e.pointerId); } catch (err) { /* fine without capture */ }
+      $('picture').classList.add('dragging');
+      ghostTo(drag, e.clientX, e.clientY, 1.08, -4);
+    });
+
+    art.addEventListener('pointermove', function (e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      ghostTo(drag, e.clientX, e.clientY, 1.08, -4);
+      var z = zoneAt(e.clientX, e.clientY);
+      if (z !== drag.over) {
+        if (drag.over) drag.over.classList.remove('over');
+        if (z && !z.classList.contains('wrong')) { z.classList.add('over'); } else { z = null; }
+        drag.over = z;
+      }
+    });
+
+    function release(e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      var x = e.clientX, y = e.clientY;
+      var zone = e.type === 'pointercancel' ? null : zoneAt(x, y);
+      var g = endDrag();
+      if (!zone || zone.classList.contains('wrong')) { springBack(g); return; }
+      var right = zone.getAttribute('data-right') === '1';
+      if (right) {
+        var zr = zone.getBoundingClientRect();
+        g.el.style.transition = 'transform .35s cubic-bezier(.4,0,.2,1), opacity .3s .1s';
+        ghostTo(g, zr.left + 60, zr.top + zr.height / 2, .35, 0);
+        g.el.style.opacity = 0;
+        setTimeout(function () { g.el.remove(); }, 420);
+      } else {
+        springBack(g);
+      }
+      choose(zone, right, solve);
+    }
+    art.addEventListener('pointerup', release);
+    art.addEventListener('pointercancel', release);
+  }
+
+  mascotInit();
+  setupDrag();
+
   $('next').addEventListener('click', function () {
     if (!answered) return;
     if (index === ITEMS.length - 1) { transitionTo(finish); } else { transitionTo(function () { index++; render(); }); }
   });
-  $('nextActivity').addEventListener('click', function () { if (mode === '1') start('1.2'); });
+  $('nextActivity').addEventListener('click', function () {
+    if (mode === '1') start('1.2'); else if (mode === '1.2') start('1.3');
+  });
   $('tab1').addEventListener('click', function () { if (mode !== '1') start('1'); });
   $('tab12').addEventListener('click', function () { if (mode !== '1.2') start('1.2'); });
+  $('tab13').addEventListener('click', function () { if (mode !== '1.3') start('1.3'); });
   $('sound').addEventListener('click', function () {
     soundOn = !soundOn;
     this.textContent = soundOn ? '🔊' : '🔇';
