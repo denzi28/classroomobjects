@@ -346,7 +346,31 @@
     return audio;
   }
 
-  // Applause: lots of short, band-passed noise bursts (claps) that thin out over time.
+  // Applause: a cheerful chime, then lots of soft claps in a small "room" (reverb).
+  var reverb;
+  function room(a) {
+    if (reverb) return reverb;
+    var len = Math.floor(a.sampleRate * 0.7), ir = a.createBuffer(2, len, a.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = ir.getChannelData(ch);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    }
+    reverb = a.createConvolver(); reverb.buffer = ir;
+    return reverb;
+  }
+
+  function chime(a, t0) {
+    [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
+      var o = a.createOscillator(), g = a.createGain(), t = t0 + i * 0.075;
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      o.connect(g); g.connect(a.destination);
+      o.start(t); o.stop(t + 0.5);
+    });
+  }
+
   function applause(big) {
     var a = ctx();
     if (!noise) {
@@ -354,19 +378,33 @@
       var d = noise.getChannelData(0);
       for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
-    var dur = big ? 3.2 : 1.9, claps = big ? 110 : 55, t0 = a.currentTime + 0.02;
+    var t0 = a.currentTime + 0.02;
+    var dur = big ? 3.4 : 2.0;
+    chime(a, t0);
+
+    // everything goes through one master gain: quick swell, then a long fade-out
+    var master = a.createGain(), dry = a.createGain(), wet = a.createGain(), rv = room(a);
+    master.gain.setValueAtTime(0.0001, t0 + 0.1);
+    master.gain.exponentialRampToValueAtTime(1, t0 + 0.4);
+    master.gain.setValueAtTime(1, t0 + dur * 0.55);
+    master.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    dry.gain.value = 0.8; wet.gain.value = 0.55;
+    master.connect(dry); dry.connect(a.destination);
+    master.connect(wet); wet.connect(rv); rv.connect(a.destination);
+
+    var claps = Math.round(dur * (big ? 85 : 70));
     for (var c = 0; c < claps; c++) {
-      var u = Math.random();
-      var t = t0 + dur * (1 - Math.pow(1 - u, 1.6));          // dense at first, sparser later
-      var level = (1 - (t - t0) / dur) * (0.55 + Math.random() * 0.45);
-      var src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+      var t = t0 + 0.15 + Math.random() * (dur - 0.3);
+      var src = a.createBufferSource(), hp = a.createBiquadFilter(), bp = a.createBiquadFilter(), g = a.createGain();
       src.buffer = noise;
-      bp.type = 'bandpass'; bp.frequency.value = 1200 + Math.random() * 2600; bp.Q.value = 0.9;
+      hp.type = 'highpass'; hp.frequency.value = 500;
+      bp.type = 'peaking'; bp.frequency.value = 1400 + Math.random() * 1400; bp.Q.value = 0.7; bp.gain.value = 8;
+      var level = 0.12 + Math.random() * 0.22;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.6 * level + 0.001, t + 0.004);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05 + Math.random() * 0.04);
-      src.connect(bp); bp.connect(g); g.connect(a.destination);
-      src.start(t, Math.random() * 0.8, 0.12);
+      g.gain.exponentialRampToValueAtTime(level, t + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.022 + Math.random() * 0.03);
+      src.connect(hp); hp.connect(bp); bp.connect(g); g.connect(master);
+      src.start(t, Math.random() * 0.8, 0.09);
     }
   }
 
