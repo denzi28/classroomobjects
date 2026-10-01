@@ -19,6 +19,9 @@
     --ease-out: cubic-bezier(.22, 1, .36, 1);
     --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   }
+  /* Everything is sized in rem. The root scales with the screen so the page looks the same
+     on a 1366x768 board, a 1080p board or a 4K board (16px at 1920x1080). */
+  html { font-size: clamp(10px, min(0.8333vw, 1.4815vh), 48px); }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
@@ -39,17 +42,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 14px 28px;
+    gap: 1rem;
+    padding: 0.875rem 1.75rem;
   }
-  h1 { margin: 0; font-size: clamp(22px, 3vw, 38px); }
-  .tabs { display: flex; gap: 10px; }
+  h1 { margin: 0; font-size: clamp(1.375rem, 3vw, 2.375rem); }
+  .tabs { display: flex; gap: 0.625rem; }
   .tab {
     font: inherit;
-    font-size: clamp(16px, 1.8vw, 24px);
-    padding: 8px 20px;
-    border-radius: 999px;
-    border: 3px solid var(--line);
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
+    padding: 0.5rem 1.25rem;
+    border-radius: 62.4375rem;
+    border: 0.1875rem solid var(--line);
     background: var(--card);
     color: var(--ink);
     cursor: pointer;
@@ -57,18 +60,18 @@
   }
   .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
   .tab:disabled { opacity: .45; cursor: default; }
-  .score { font-size: clamp(18px, 2.2vw, 30px); font-weight: bold; white-space: nowrap; display: inline-block; }
+  .score { font-size: clamp(1.125rem, 2.2vw, 1.875rem); font-weight: bold; white-space: nowrap; display: inline-block; }
   .score.bump { animation: bump .5s var(--ease-spring); }
   @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.35) rotate(-4deg); } 100% { transform: scale(1); } }
 
-  .progress { height: 14px; margin: 0 28px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .progress { height: 0.875rem; margin: 0 1.75rem; background: var(--line); border-radius: 6.1875rem; overflow: hidden; }
   .progress > div {
     height: 100%;
     width: 100%;
     transform: scaleX(0);
     transform-origin: left;
     background: linear-gradient(90deg, #3a86ff, #59c9a5);
-    border-radius: 99px;
+    border-radius: 6.1875rem;
     transition: transform .6s var(--ease-out);
   }
 
@@ -77,19 +80,19 @@
     min-height: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    padding: 20px 28px 28px;
+    gap: 1.75rem;
+    padding: 1.25rem 1.75rem 1.75rem;
     align-items: stretch;
   }
   .picture {
     position: relative;
     background: var(--card);
-    border: 4px solid var(--line);
-    border-radius: 28px;
+    border: 0.25rem solid var(--line);
+    border-radius: 1.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 1.25rem;
     min-height: 0;
     transition: border-color .3s, background .3s;
   }
@@ -101,7 +104,7 @@
     animation: float 3.6s ease-in-out infinite;
     will-change: transform;
   }
-  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.5rem); } }
   .picture.solved svg { animation: hop .7s var(--ease-spring); }
   @keyframes hop { 0% { transform: scale(1); } 35% { transform: scale(1.12) rotate(-3deg); } 70% { transform: scale(.97) rotate(2deg); } 100% { transform: scale(1); } }
 
@@ -109,24 +112,24 @@
   .picture, .quiz > * { will-change: transform, opacity; }
   .leaving { animation: leave .22s ease-in forwards; }
   .entering { animation: enter .5s var(--ease-out) both; }
-  @keyframes leave { to { opacity: 0; transform: translateX(-30px) scale(.97); } }
-  @keyframes enter { from { opacity: 0; transform: translateX(40px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes leave { to { opacity: 0; transform: translateX(-1.875rem) scale(.97); } }
+  @keyframes enter { from { opacity: 0; transform: translateX(2.5rem) scale(.97); } to { opacity: 1; transform: none; } }
 
-  .quiz { display: flex; flex-direction: column; justify-content: center; gap: 20px; min-height: 0; }
-  .question { font-size: clamp(34px, 5.5vw, 80px); font-weight: bold; margin: 0 0 6px; }
+  .quiz { display: flex; flex-direction: column; justify-content: center; gap: 1.25rem; min-height: 0; }
+  .question { font-size: clamp(2.125rem, 5.5vw, 5rem); font-weight: bold; margin: 0 0 0.375rem; }
   .question .q-emoji { display: inline-block; animation: wiggle 2.8s ease-in-out infinite; transform-origin: 70% 80%; }
   @keyframes wiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(14deg); } 90% { transform: rotate(-10deg); } 95% { transform: rotate(8deg); } }
-  .options { display: flex; flex-direction: column; gap: 18px; }
+  .options { display: flex; flex-direction: column; gap: 1.125rem; }
   .option {
     font: inherit;
-    font-size: clamp(26px, 4vw, 56px);
+    font-size: clamp(1.625rem, 4vw, 3.5rem);
     display: flex;
     align-items: center;
-    gap: 22px;
+    gap: 1.375rem;
     text-align: left;
-    padding: 16px 26px;
-    border-radius: 24px;
-    border: 4px solid var(--line);
+    padding: 1rem 1.625rem;
+    border-radius: 1.5rem;
+    border: 0.25rem solid var(--line);
     background: var(--card);
     color: var(--ink);
     cursor: pointer;
@@ -135,8 +138,8 @@
     animation: pop .5s var(--ease-spring) backwards;
     animation-delay: calc(var(--i) * 90ms + 120ms);
   }
-  @keyframes pop { from { opacity: 0; transform: translateY(24px) scale(.94); } to { opacity: 1; transform: none; } }
-  @media (hover: hover) { .option:hover { transform: translateX(8px); box-shadow: 0 6px 0 var(--line); } }
+  @keyframes pop { from { opacity: 0; transform: translateY(1.5rem) scale(.94); } to { opacity: 1; transform: none; } }
+  @media (hover: hover) { .option:hover { transform: translateX(0.5rem); box-shadow: 0 0.375rem 0 var(--line); } }
   .option:active { transform: scale(.97); }
   .option .letter {
     flex: none;
@@ -144,7 +147,7 @@
     display: grid; place-items: center;
     border-radius: 50%;
     background: var(--bg);
-    border: 3px solid var(--line);
+    border: 0.1875rem solid var(--line);
     font-weight: bold;
     transition: background .3s, border-color .3s, color .3s;
   }
@@ -159,13 +162,13 @@
   .options.locked .option { cursor: default; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-12px); } 40% { transform: translateX(10px); }
-    60% { transform: translateX(-7px); } 80% { transform: translateX(4px); }
+    20% { transform: translateX(-0.75rem); } 40% { transform: translateX(0.625rem); }
+    60% { transform: translateX(-0.4375rem); } 80% { transform: translateX(0.25rem); }
   }
 
   .feedback {
     min-height: 1.3em;
-    font-size: clamp(24px, 3.2vw, 44px);
+    font-size: clamp(1.5rem, 3.2vw, 2.75rem);
     font-weight: bold;
     margin: 0;
   }
@@ -176,54 +179,53 @@
   .next {
     align-self: flex-start;
     font: inherit;
-    font-size: clamp(22px, 3vw, 40px);
-    padding: 12px 36px;
-    border-radius: 999px;
+    font-size: clamp(1.375rem, 3vw, 2.5rem);
+    padding: 0.75rem 2.25rem;
+    border-radius: 62.4375rem;
     border: 0;
     background: var(--accent);
     color: #fff;
     cursor: pointer;
     opacity: 0;
-    transform: translateY(16px) scale(.9);
+    transform: translateY(1rem) scale(.9);
     pointer-events: none;
     transition: opacity .3s, transform .45s var(--ease-spring);
   }
   .next.show { opacity: 1; transform: none; pointer-events: auto; }
   .next.show:active { transform: scale(.94); }
 
-  .done { grid-column: 1 / -1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; }
-  .done h2 { font-size: clamp(36px, 6vw, 84px); margin: 0; }
-  .done p { font-size: clamp(24px, 3.5vw, 48px); margin: 0; }
-  .done .stars { font-size: clamp(56px, 10vw, 150px); font-weight: bold; animation: pop .7s var(--ease-spring) .3s backwards; }
+  .done { grid-column: 1 / -1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1.375rem; text-align: center; }
+  .done h2 { font-size: clamp(2.25rem, 6vw, 5.25rem); margin: 0; }
+  .done p { font-size: clamp(1.5rem, 3.5vw, 3rem); margin: 0; }
+  .done .stars { font-size: clamp(3.5rem, 10vw, 9.375rem); font-weight: bold; animation: pop .7s var(--ease-spring) .3s backwards; }
   .done .stars span { display: inline-block; animation: pop .7s var(--ease-spring) both; animation-delay: calc(var(--i) * 180ms + 200ms); }
   .done .next { opacity: 1; transform: none; pointer-events: auto; align-self: center; }
-  body.mode13 #nextActivity { display: none; }   /* nothing after Activity 1.3 yet */
+  body.mode12 #nextActivity { display: none; }   /* nothing after Activity 1.2 yet */
   body.finished main > :not(.done) { display: none; }
   body.finished .done { display: flex; animation: enter .6s var(--ease-out) both; }
 
-  /* ---------- picture wrapper + drag and drop (Activity 1.3) ---------- */
+  /* ---------- picture wrapper + drag and drop (Activity 1) ---------- */
   .art { width: 100%; height: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
-  body.mode13 .art { cursor: grab; touch-action: none; }
+  body.mode1 .art { cursor: grab; touch-action: none; }
   .picture.dragging .art svg { animation: none; opacity: .22; }
   .picture.dragging .art { cursor: grabbing; }
   .ghost {
     position: fixed; left: 0; top: 0; z-index: 30;
     pointer-events: none;
-    filter: drop-shadow(0 14px 14px rgba(0,0,0,.28));
+    filter: drop-shadow(0 0.875rem 0.875rem rgba(0,0,0,.28));
     will-change: transform;
   }
   .ghost svg { width: 100%; height: 100%; display: block; }
   .option.zone { border-style: dashed; background: #fffdf7; }
   .option.zone.over { border-color: var(--accent); border-style: solid; background: #eaf2ff; transform: scale(1.04); }
   .option.zone.correct { border-style: solid; }
-  .option.zone.nudge { animation: shake .4s ease; }
   @media (hover: hover) { .option.zone:hover { transform: none; box-shadow: none; } .option.zone.over:hover { transform: scale(1.04); } }
   .feedback.hint { color: var(--muted); }
 
   /* ---------- the pencil mascot ---------- */
-  .mascot { position: absolute; right: 14px; bottom: 10px; width: clamp(112px, 9vw, 160px); pointer-events: none; z-index: 2; }
+  .mascot { position: absolute; right: 0.875rem; bottom: 0.625rem; width: clamp(7rem, 9vw, 10rem); pointer-events: none; z-index: 2; }
   .mascot svg { width: 100%; display: block; overflow: visible; }
-  .mascot.big { position: relative; right: auto; bottom: auto; width: clamp(110px, 16vw, 190px); margin: 0 auto; }
+  .mascot.big { position: relative; right: auto; bottom: auto; width: clamp(6.875rem, 16vw, 11.875rem); margin: 0 auto; }
   body:not(.finished) .mascot.big { display: none; }
   .m-body { transform-origin: 60px 186px; animation: mbob 3s ease-in-out infinite; }
   @keyframes mbob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
@@ -250,31 +252,31 @@
   @keyframes mdroop { to { transform: rotate(-3deg) translateY(2px); } }
   .bubble {
     position: absolute; right: 78%; bottom: 76%;
-    min-width: 90px; max-width: 220px;
-    padding: 8px 14px;
-    background: #fff; border: 3px solid var(--ink); border-radius: 18px;
-    font-size: 20px; font-weight: bold; text-align: center; line-height: 1.2;
+    min-width: 5.625rem; max-width: 13.75rem;
+    padding: 0.5rem 0.875rem;
+    background: #fff; border: 0.1875rem solid var(--ink); border-radius: 1.125rem;
+    font-size: 1.25rem; font-weight: bold; text-align: center; line-height: 1.2;
     opacity: 0; transform: scale(.4); transform-origin: 100% 100%;
     transition: opacity .2s, transform .45s var(--ease-spring);
     white-space: nowrap;
   }
   .bubble::after {
-    content: ""; position: absolute; right: 14px; bottom: -11px; width: 16px; height: 16px;
-    background: #fff; border-right: 3px solid var(--ink); border-bottom: 3px solid var(--ink);
+    content: ""; position: absolute; right: 0.875rem; bottom: -0.6875rem; width: 1rem; height: 1rem;
+    background: #fff; border-right: 0.1875rem solid var(--ink); border-bottom: 0.1875rem solid var(--ink);
     transform: rotate(45deg);
   }
   .bubble.show { opacity: 1; transform: scale(1); }
-  .mascot.big .bubble { right: 90%; bottom: 60%; font-size: 26px; }
+  .mascot.big .bubble { right: 90%; bottom: 60%; font-size: 1.625rem; }
 
   .flystar {
     position: fixed;
     left: 0; top: 0;
     pointer-events: none;
     z-index: 11;
-    font-size: clamp(40px, 5vw, 76px);
+    font-size: clamp(2.5rem, 5vw, 4.75rem);
     line-height: 1;
     will-change: transform, opacity;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,.25));
+    filter: drop-shadow(0 0.25rem 0.375rem rgba(0,0,0,.25));
   }
 
   .confetti {
@@ -282,54 +284,55 @@
     left: 0; top: 0;
     pointer-events: none;
     z-index: 10;
-    font-size: clamp(24px, 3vw, 44px);
+    font-size: clamp(1.5rem, 3vw, 2.75rem);
     will-change: transform, opacity;
   }
 
   @media (max-width: 800px) {
+    html { font-size: 16px; }
     html, body { height: auto; min-height: 100%; }
     body { overflow-x: hidden; overflow-y: auto; }
 
-    header { padding: 8px 14px; gap: 6px 10px; }
-    h1 { order: 1; flex: 1 1 0; min-width: 0; font-size: 18px; line-height: 1.1; }
-    #sound { order: 2; padding: 4px 12px; font-size: 18px; }
-    .score { order: 3; font-size: 20px; }
-    .tabs { order: 4; flex: 1 1 100%; gap: 8px; }
-    .tab { font-size: 13px; padding: 7px 10px; border-width: 2px; }
-    .tabs .tab { flex: 1 1 0; border-radius: 16px; line-height: 1.2; text-wrap: balance; }
-    .progress { margin: 0 14px 6px; height: 10px; }
+    header { padding: 0.5rem 0.875rem; gap: 0.375rem 0.625rem; }
+    h1 { order: 1; flex: 1 1 0; min-width: 0; font-size: 1.125rem; line-height: 1.1; }
+    #sound { order: 2; padding: 0.25rem 0.75rem; font-size: 1.125rem; }
+    .score { order: 3; font-size: 1.25rem; }
+    .tabs { order: 4; flex: 1 1 100%; gap: 0.5rem; }
+    .tab { font-size: 0.8125rem; padding: 0.4375rem 0.625rem; border-width: 0.125rem; }
+    .tabs .tab { flex: 1 1 0; border-radius: 1rem; line-height: 1.2; text-wrap: balance; }
+    .progress { margin: 0 0.875rem 0.375rem; height: 0.625rem; }
 
     main {
       display: flex;
       flex-direction: column;
       flex: none;
-      min-height: calc(100vh - 130px);
-      gap: 14px;
-      padding: 8px 14px 28px;
+      min-height: calc(100vh - 8.125rem);
+      gap: 0.875rem;
+      padding: 0.5rem 0.875rem 1.75rem;
     }
-    .picture { flex: none; height: 32vh; min-height: 190px; max-height: 300px; padding: 12px; border-width: 3px; border-radius: 22px; }
+    .picture { flex: none; height: 32vh; min-height: 11.875rem; max-height: 18.75rem; padding: 0.75rem; border-width: 0.1875rem; border-radius: 1.375rem; }
     .picture svg { height: 100%; max-height: 100%; }
-    .quiz { flex: none; justify-content: flex-start; gap: 12px; }
-    .question { font-size: 28px; margin: 0; line-height: 1.2; }
-    .options { gap: 10px; }
-    .option { font-size: 21px; padding: 12px 14px; gap: 12px; border-width: 3px; border-radius: 18px; }
-    .option .letter { border-width: 2px; }
-    .feedback { font-size: 21px; min-height: 1.3em; }
-    .next { align-self: stretch; text-align: center; font-size: 20px; padding: 12px 20px; }
+    .quiz { flex: none; justify-content: flex-start; gap: 0.75rem; }
+    .question { font-size: 1.75rem; margin: 0; line-height: 1.2; }
+    .options { gap: 0.625rem; }
+    .option { font-size: 1.3125rem; padding: 0.75rem 0.875rem; gap: 0.75rem; border-width: 0.1875rem; border-radius: 1.125rem; }
+    .option .letter { border-width: 0.125rem; }
+    .feedback { font-size: 1.3125rem; min-height: 1.3em; }
+    .next { align-self: stretch; text-align: center; font-size: 1.25rem; padding: 0.75rem 1.25rem; }
 
-    .done { flex: 1; gap: 14px; }
-    .done h2 { font-size: 40px; }
-    .done .stars { font-size: 64px; }
-    .confetti { font-size: 26px; }
-    .flystar { font-size: 40px; }
+    .done { flex: 1; gap: 0.875rem; }
+    .done h2 { font-size: 2.5rem; }
+    .done .stars { font-size: 4rem; }
+    .confetti { font-size: 1.625rem; }
+    .flystar { font-size: 2.5rem; }
     .tab .w { display: none; }
-    .tabs .tab { padding: 7px 6px; font-size: 13px; }
-    body.mode13 .picture { height: 24vh; min-height: 150px; }
-    .mascot { width: 58px; right: 8px; bottom: 6px; }
-    .bubble { font-size: 13px; padding: 4px 9px; border-width: 2px; min-width: 0; max-width: 150px; border-radius: 12px; }
-    .bubble::after { width: 10px; height: 10px; bottom: -7px; border-width: 2px; }
-    .mascot.big { width: 110px; }
-    .mascot.big .bubble { font-size: 18px; right: 40%; bottom: 100%; }
+    .tabs .tab { padding: 0.4375rem 0.375rem; font-size: 0.8125rem; }
+    body.mode1 .picture { height: 26vh; min-height: 9.375rem; }
+    .mascot { width: 3.625rem; right: 0.5rem; bottom: 0.375rem; }
+    .bubble { font-size: 0.8125rem; padding: 0.25rem 0.5625rem; border-width: 0.125rem; min-width: 0; max-width: 9.375rem; border-radius: 0.75rem; }
+    .bubble::after { width: 0.625rem; height: 0.625rem; bottom: -0.4375rem; border-width: 0.125rem; }
+    .mascot.big { width: 6.875rem; }
+    .mascot.big .bubble { font-size: 1.125rem; right: 40%; bottom: 100%; }
   }
 </style>
 </head>
@@ -340,7 +343,6 @@
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab1" aria-selected="true">🔍 <span class="w">Activity </span>1 · What is it?</button>
     <button class="tab" role="tab" id="tab12" aria-selected="false">🤔 <span class="w">Activity </span>1.2 · Is it …?</button>
-    <button class="tab" role="tab" id="tab13" aria-selected="false">✋ <span class="w">Activity </span>1.3 · Drag it</button>
   </div>
   <button class="tab" id="sound" title="Sound on/off" aria-label="Sound">🔊</button>
   <div class="score" id="score">⭐ 0 / 8</div>
@@ -541,7 +543,7 @@
       el.textContent = pick(emojis || CONFETTI);
       document.body.appendChild(el);
       var angle = Math.random() * Math.PI * 2;
-      var dist = 140 + Math.random() * 260;
+      var dist = (140 + Math.random() * 260) * (parseFloat(getComputedStyle(document.documentElement).fontSize) / 16);
       var dx = Math.cos(angle) * dist;
       var dy = Math.sin(angle) * dist - 120;
       var spin = (Math.random() - .5) * 720;
@@ -568,8 +570,9 @@
     var target = $('score');
     var a = fromEl.getBoundingClientRect(), t = target.getBoundingClientRect();
     var sx = a.left + a.width / 2, sy = a.top + a.height / 2;
-    var tx = t.left + 22, ty = t.top + t.height / 2;          // the ⭐ at the start of the score
-    var cx = sx + (tx - sx) * .35, cy = Math.max(30, Math.min(sy, ty) - 120);   // curve control point, kept on screen
+    var u = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16;
+    var tx = t.left + 22 * u, ty = t.top + t.height / 2;          // the ⭐ at the start of the score
+    var cx = sx + (tx - sx) * .35, cy = Math.max(30 * u, Math.min(sy, ty) - 120 * u);   // curve control point, kept on screen
     var el = document.createElement('span');
     el.className = 'flystar';
     el.textContent = '⭐';
@@ -629,8 +632,8 @@
     mode = m || mode;
     gen++;
     cancelDrag();
-    document.body.classList.toggle('mode13', mode === '1.3');
-    $('tab13').setAttribute('aria-selected', mode === '1.3');
+    document.body.classList.toggle('mode1', mode === '1');
+    document.body.classList.toggle('mode12', mode === '1.2');
     streak = 0;
     mascotReset();
     $('tab1').setAttribute('aria-selected', mode === '1');
@@ -671,17 +674,15 @@
     $('feedback').className = 'feedback';
     $('feedback').textContent = '';
 
-    if (mode === '1' || mode === '1.3') {
-      $('question').innerHTML = 'What is it? <span class="q-emoji">' + (mode === '1.3' ? '✋' : '🤔') + '</span>';
+    if (mode === '1') {
+      $('question').innerHTML = 'What is it? <span class="q-emoji">🤔</span>';
       var wrongOnes = shuffle(ITEMS.filter(function (x) { return x !== item; })).slice(0, 2);
       renderOptions(shuffle([item].concat(wrongOnes)).map(function (c, i) {
         return { letter: LETTERS[i], text: c.article + ' ' + c.name, right: c === item };
-      }), mode === '1.3' ? function (b) { nudge(b); } : function (b, right) { choose(b, right, solve); }, mode === '1.3');
-      if (mode === '1.3') {
-        var fbh = $('feedback');
-        fbh.className = 'feedback hint show';
-        fbh.textContent = '✋ Drag the picture to the right word.';
-      }
+      }), function (b, right) { choose(b, right, solve); }, true);   // words are tap targets AND drop zones
+      var fbh = $('feedback');
+      fbh.className = 'feedback hint show';
+      fbh.textContent = '✋ Tap the right word, or drag the picture to it.';
     } else {
       // step 1: "Is it a book?"  ->  Yes / No
       var isYes = q.claim === item;
@@ -799,16 +800,9 @@
     }, 250);
   }
 
-  // ---------- Activity 1.3: drag the picture onto the right word ----------
+  // ---------- Activity 1: besides tapping, drag the picture onto the right word ----------
   var drag = null;
-
-  function nudge(zone) {           // tapping a word instead of dragging: a gentle hint, no penalty
-    if (answered || busy) return;
-    zone.classList.remove('nudge'); void zone.offsetWidth; zone.classList.add('nudge');
-    var fb = $('feedback');
-    fb.className = 'feedback hint show';
-    fb.textContent = '✋ Drag the picture here!';
-  }
+  function ui() { return parseFloat(getComputedStyle(document.documentElement).fontSize) / 16; }   // 1 at 1920x1080
 
   function zoneAt(x, y) {
     var els = document.elementsFromPoint(x, y);
@@ -845,12 +839,12 @@
   function setupDrag() {
     var art = $('art');
     art.addEventListener('pointerdown', function (e) {
-      if (mode !== '1.3' || answered || busy || drag) return;
+      if (mode !== '1' || answered || busy || drag) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       var svg = art.querySelector('svg');
       if (!svg) return;
       e.preventDefault();
-      var w = window.innerWidth < 800 ? 110 : 230, h = w * 168 / 200;
+      var w = (window.innerWidth < 800 ? 110 : 230) * ui(), h = w * 168 / 200;
       var el = document.createElement('div');
       el.className = 'ghost';
       el.style.width = w + 'px'; el.style.height = h + 'px';
@@ -903,12 +897,9 @@
     if (!answered) return;
     if (index === ITEMS.length - 1) { transitionTo(finish); } else { transitionTo(function () { index++; render(); }); }
   });
-  $('nextActivity').addEventListener('click', function () {
-    if (mode === '1') start('1.2'); else if (mode === '1.2') start('1.3');
-  });
+  $('nextActivity').addEventListener('click', function () { if (mode === '1') start('1.2'); });
   $('tab1').addEventListener('click', function () { if (mode !== '1') start('1'); });
   $('tab12').addEventListener('click', function () { if (mode !== '1.2') start('1.2'); });
-  $('tab13').addEventListener('click', function () { if (mode !== '1.3') start('1.3'); });
   $('sound').addEventListener('click', function () {
     soundOn = !soundOn;
     this.textContent = soundOn ? '🔊' : '🔇';
